@@ -13,13 +13,13 @@ function connect() {
             reconnectInterval = null;
         }
 
-        // Keep-Alive: Send PING every 20s
+        // Keep-Alive: Send PING every 10s
         if (keepAliveInterval) clearInterval(keepAliveInterval);
         keepAliveInterval = setInterval(() => {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: 'PING' }));
             }
-        }, 20000);
+        }, 10000);
     };
 
     socket.onmessage = (event) => {
@@ -30,7 +30,10 @@ function connect() {
                 chrome.tabs.query({ url: 'https://music.youtube.com/*' }, (tabs) => {
                     if (tabs.length > 0) {
                         tabs.forEach((tab) => {
-                            chrome.tabs.sendMessage(tab.id, message);
+                            chrome.tabs.sendMessage(tab.id, message).catch(err => {
+                                // Tab might be closed or content script not ready
+                                console.log('Pulse: Failed to send to tab', tab.id, err);
+                            });
                         });
                     } else if (['play', 'next', 'prev'].includes(message.command)) {
                         chrome.tabs.create({ url: 'https://music.youtube.com' });

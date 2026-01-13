@@ -8,11 +8,31 @@ const PORT = process.env.WS_PORT || 8999;
 let wss;
 let mainWindow;
 
-// Enable Auto-start (Login Item)
-app.setLoginItemSettings({
-    openAtLogin: true,
-    path: app.getPath('exe'),
-});
+// Prevent multiple instances
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+    app.quit();
+} else {
+    app.on('second-instance', () => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+        }
+    });
+
+    // Global Error Handling to prevent crashes
+    process.on('uncaughtException', (error) => {
+        console.error('CRITICAL ERROR:', error);
+        // Keep running if possible
+    });
+
+    // Enable Auto-start (Login Item)
+    app.setLoginItemSettings({
+        openAtLogin: true,
+        path: app.getPath('exe'),
+    });
+}
 
 function startServer() {
     wss = new WebSocket.Server({ port: PORT });

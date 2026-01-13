@@ -33,12 +33,11 @@ class PulseConnector {
 
         // Keep Service Worker Alive
         setInterval(() => {
-            try {
-                chrome.runtime.sendMessage({ type: 'KEEP_ALIVE' });
-            } catch (e) {
-                // Ignore errors if extension context invalidated
-            }
-        }, 20000);
+            // Use void to ignore the promise return and .catch to handle errors
+            void chrome.runtime.sendMessage({ type: 'KEEP_ALIVE' }).catch(() => {
+                // Ignore errors if extension context invalidated or receiver missing
+            });
+        }, 10000);
     }
 
     checkForUpdates() {
