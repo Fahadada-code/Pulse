@@ -97,7 +97,8 @@ function createWindow() {
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
-            contextIsolation: true
+            contextIsolation: true,
+            autoplayPolicy: 'no-user-gesture-required'
         },
         icon: path.join(__dirname, '../assets/icon.png') // Set app icon
     });
@@ -140,6 +141,7 @@ function createWindow() {
     // Handle Desktop Audio Stream Request
     ipcMain.handle('get-desktop-stream-id', async () => {
         const sources = await require('electron').desktopCapturer.getSources({ types: ['screen'] });
+        console.log('Desktop Sources Found:', sources.length, sources[0]?.id);
         // Return the first screen source (usually the primary display with system audio)
         return sources[0]?.id;
     });

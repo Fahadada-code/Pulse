@@ -10,6 +10,13 @@ const extendedUI = document.getElementById('extended-ui');
 const miniModeContainer = document.getElementById('mini-mode-container');
 const expandBtn = document.getElementById('expand-btn');
 
+// Resume AudioContext on any interaction (Fallback)
+document.addEventListener('click', () => {
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+});
+
 // Playback Controls
 playPauseBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('play'));
 prevBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('prev'));
@@ -133,6 +140,26 @@ function drawVisualizer() {
     let barHeight;
     let x = 0;
 
+    // Calculate Average Volume for Border Pulse
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+        sum += dataArray[i];
+    }
+    const average = sum / dataArray.length;
+
+    // Map average to glow intensity (0 to 30px)
+    const intensity = (average / 255) * 30;
+    const borderColor = `rgba(0, 255, 255, ${average / 255 * 0.8})`; // Cyan variable opacity
+
+    // Apply to current mode container
+    if (document.getElementById('mini-mode').style.display === 'flex') {
+        const miniBg = document.getElementById('mini-background');
+        miniBg.style.boxShadow = `0 0 ${intensity + 10}px ${borderColor}`;
+        miniBg.style.borderColor = `rgba(255, 255, 255, ${0.2 + (average / 255) * 0.5})`;
+    } else {
+        document.body.style.boxShadow = `0 0 ${intensity + 5}px ${borderColor}`;
+    }
+
     for (let i = 0; i < dataArray.length; i++) {
         barHeight = dataArray[i] / 2; // Scale down
 
@@ -178,6 +205,14 @@ function stopVisualizer() {
     }
     // Clear canvas
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Reset Borders
+    document.body.style.boxShadow = 'none';
+    const miniBg = document.getElementById('mini-background');
+    if (miniBg) {
+        miniBg.style.boxShadow = 'none';
+        miniBg.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+    }
 }
 
 // Update UI on Data
