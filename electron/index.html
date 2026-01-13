@@ -99,29 +99,51 @@
             font-size: 14px;
             opacity: 0.6;
         }
+
+        /* Mini-mode Logo */
+        #mini-logo {
+            display: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            -webkit-app-region: drag;
+            transition: transform 0.2s;
+        }
+
+        #mini-logo:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 
 <body>
-    <img id="album-art" src="" style="display: none;"> <!-- Placeholder hidden initially -->
-    <div id="album-art-placeholder"
-        style="width: 80px; height: 80px; background: #333; border-radius: 8px; margin-right: 15px;"></div>
+    <!-- Extended Mode UI -->
+    <div id="extended-ui" style="display: flex; align-items: center; width: 100%;">
+        <img id="album-art" src="" style="display: none;">
+        <div id="album-art-placeholder"
+            style="width: 80px; height: 80px; background: #333; border-radius: 8px; margin-right: 15px;"></div>
 
-    <div class="info-container">
-        <h2 id="track-title">Not Playing</h2>
-        <p id="artist-name">Waiting for music...</p>
+        <div class="info-container">
+            <h2 id="track-title">Not Playing</h2>
+            <p id="artist-name">Waiting for music...</p>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-            <div class="controls">
-                <button class="control-btn" id="prev-btn">⏮</button>
-                <button class="control-btn" id="play-pause-btn">▶</button>
-                <button class="control-btn" id="next-btn">⏭</button>
-            </div>
-            <div class="actions">
-                <button class="control-btn min-btn" id="min-btn" title="Minimize">⎯</button>
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div class="controls">
+                    <button class="control-btn" id="prev-btn">⏮</button>
+                    <button class="control-btn" id="play-pause-btn">▶</button>
+                    <button class="control-btn" id="next-btn">⏭</button>
+                </div>
+                <div class="actions">
+                    <button class="control-btn min-btn" id="min-btn" title="Collapse">⎯</button>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Mini Mode UI -->
+    <img id="mini-logo" src="logo.png" title="Click to Expand">
+
     <script src="renderer.js"></script>
 </body>
 

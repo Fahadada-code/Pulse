@@ -73,24 +73,13 @@ function createWindow() {
 
     // Handle commands from renderer
     ipcMain.on('media-command', (event, command) => {
-        const hasClients = wss && wss.clients.size > 0;
-
-        if (hasClients) {
-            // Broadcast to all connected clients (extensions)
+        // Broadcast to all connected clients (extensions)
+        if (wss) {
             wss.clients.forEach((client) => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify({ type: 'COMMAND', command }));
                 }
             });
-        } else {
-            // Smart Logic: If no clients, open YouTube Music
-            // We do this for play, next, prev - basically any interaction implies intent to listen
-            if (['play', 'next', 'prev'].includes(command)) {
-                console.log('No clients connected. Launching YouTube Music...');
-                shell.openExternal('https://music.youtube.com');
-                // Notify renderer that we are launching
-                mainWindow.webContents.send('launching-plugin');
-            }
         }
     });
 

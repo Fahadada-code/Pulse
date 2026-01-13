@@ -19,9 +19,15 @@ function connect() {
             if (message.type === 'COMMAND') {
                 // Forward command to content script
                 chrome.tabs.query({ url: 'https://music.youtube.com/*' }, (tabs) => {
-                    tabs.forEach((tab) => {
-                        chrome.tabs.sendMessage(tab.id, message);
-                    });
+                    if (tabs.length > 0) {
+                        tabs.forEach((tab) => {
+                            chrome.tabs.sendMessage(tab.id, message);
+                        });
+                    } else if (['play', 'next', 'prev'].includes(message.command)) {
+                        // Smart Launch: No tab found, create one
+                        console.log('Pulse: No YTM tab found, creating one...');
+                        chrome.tabs.create({ url: 'https://music.youtube.com' });
+                    }
                 });
             }
         } catch (e) {
