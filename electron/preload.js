@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onLaunchingPlugin: (callback) => ipcRenderer.on('launching-plugin', () => callback()),
     sendMediaCommand: (command) => ipcRenderer.send('media-command', command),
     minimizeWindow: () => ipcRenderer.send('minimize-window'),
-    resizeWindow: (width, height) => ipcRenderer.send('resize-window', { width, height })
+    resizeWindow: (width, height) => ipcRenderer.send('resize-window', { width, height }),
+    moveWindow: (x, y) => ipcRenderer.send('move-window', { x, y })
 });

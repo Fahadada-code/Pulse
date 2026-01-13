@@ -90,6 +90,12 @@ function createWindow() {
         }
     });
 
+    ipcMain.on('move-window', (event, { x, y }) => {
+        if (mainWindow) {
+            mainWindow.setPosition(x, y);
+        }
+    });
+
     ipcMain.on('minimize-window', () => {
         if (mainWindow) mainWindow.minimize();
     });
