@@ -94,7 +94,13 @@ function createWindow() {
         }
     });
 
-    // Handle Minimize
+    // Handle Mini-Mode
+    ipcMain.on('resize-window', (event, { width, height }) => {
+        if (mainWindow) {
+            mainWindow.setSize(width, height);
+        }
+    });
+
     ipcMain.on('minimize-window', () => {
         if (mainWindow) mainWindow.minimize();
     });

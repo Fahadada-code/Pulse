@@ -5,5 +5,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onConnectionStatus: (callback) => ipcRenderer.on('connection-status', (event, isConnected) => callback(isConnected)),
     onLaunchingPlugin: (callback) => ipcRenderer.on('launching-plugin', () => callback()),
     sendMediaCommand: (command) => ipcRenderer.send('media-command', command),
-    minimizeWindow: () => ipcRenderer.send('minimize-window')
+    minimizeWindow: () => ipcRenderer.send('minimize-window'),
+    resizeWindow: (width, height) => ipcRenderer.send('resize-window', { width, height })
 });

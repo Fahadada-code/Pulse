@@ -6,14 +6,38 @@ const playPauseBtn = document.getElementById('play-pause-btn');
 const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
 const minBtn = document.getElementById('min-btn');
+const extendedUI = document.getElementById('extended-ui');
+const miniLogo = document.getElementById('mini-logo');
 
 // Playback Controls
 playPauseBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('play'));
 prevBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('prev'));
 nextBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('next'));
 
-// Minimize
-minBtn.addEventListener('click', () => window.electronAPI.minimizeWindow());
+// Mode Switching
+minBtn.addEventListener('click', () => {
+    // Collapse to Mini Mode
+    extendedUI.style.display = 'none';
+    miniLogo.style.display = 'block';
+
+    // Resize window to 60x60 (tiny square)
+    window.electronAPI.resizeWindow(60, 60);
+    document.body.style.padding = '0'; // Remove padding for icon
+    document.body.style.background = 'transparent'; // Ensure transparent background
+    document.body.style.border = 'none';
+});
+
+miniLogo.addEventListener('click', () => {
+    // Expand to Full Mode
+    miniLogo.style.display = 'none';
+    extendedUI.style.display = 'flex';
+
+    // Resize back to original
+    window.electronAPI.resizeWindow(400, 120);
+    document.body.style.padding = '15px';
+    document.body.style.background = 'rgba(20, 20, 20, 0.95)';
+    document.body.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+});
 
 function setIdleState() {
     titleEl.innerText = 'Not Playing';
