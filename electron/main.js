@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const WebSocket = require('ws');
 require('dotenv').config();
@@ -8,17 +8,24 @@ const PORT = process.env.WS_PORT || 8999;
 let wss;
 let mainWindow;
 
+// Enable Auto-start (Login Item)
+app.setLoginItemSettings({
+    openAtLogin: true,
+    path: app.getPath('exe'),
+});
+
 function startServer() {
     wss = new WebSocket.Server({ port: PORT });
 
     wss.on('connection', (ws) => {
         console.log('Client connected');
+        // Notify renderer of connection
+        if (mainWindow) mainWindow.webContents.send('connection-status', true);
 
         ws.on('message', (message) => {
             try {
                 const parsed = JSON.parse(message);
                 if (parsed.type === 'TRACK_UPDATE') {
-                    console.log('Received track update:', parsed.data.title); // Debug log
                     // Forward to renderer
                     if (mainWindow) {
                         mainWindow.webContents.send('track-update', parsed.data);
@@ -28,9 +35,16 @@ function startServer() {
                 console.error('Failed to parse message:', e);
             }
         });
+
+        ws.on('close', () => {
+            console.log('Client disconnected');
+            if (mainWindow && wss.clients.size === 0) {
+                mainWindow.webContents.send('connection-status', false);
+            }
+        });
     });
 
-    console.log('WebSocket server started on port 8999');
+    console.log('WebSocket server started on port ' + PORT);
 }
 
 function createWindow() {
@@ -59,14 +73,30 @@ function createWindow() {
 
     // Handle commands from renderer
     ipcMain.on('media-command', (event, command) => {
-        // Broadcast to all connected clients (extensions)
-        if (wss) {
+        const hasClients = wss && wss.clients.size > 0;
+
+        if (hasClients) {
+            // Broadcast to all connected clients (extensions)
             wss.clients.forEach((client) => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify({ type: 'COMMAND', command }));
                 }
             });
+        } else {
+            // Smart Logic: If no clients, open YouTube Music
+            // We do this for play, next, prev - basically any interaction implies intent to listen
+            if (['play', 'next', 'prev'].includes(command)) {
+                console.log('No clients connected. Launching YouTube Music...');
+                shell.openExternal('https://music.youtube.com');
+                // Notify renderer that we are launching
+                mainWindow.webContents.send('launching-plugin');
+            }
         }
+    });
+
+    // Handle Minimize
+    ipcMain.on('minimize-window', () => {
+        if (mainWindow) mainWindow.minimize();
     });
 }
 

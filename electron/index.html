@@ -65,6 +65,14 @@
             -webkit-app-region: no-drag;
         }
 
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            -webkit-app-region: no-drag;
+            margin-left: 10px;
+        }
+
         .control-btn {
             background: none;
             border: none;
@@ -86,6 +94,11 @@
         #play-pause-btn {
             font-size: 28px;
         }
+
+        .min-btn {
+            font-size: 14px;
+            opacity: 0.6;
+        }
     </style>
 </head>
 
@@ -98,10 +111,15 @@
         <h2 id="track-title">Not Playing</h2>
         <p id="artist-name">Waiting for music...</p>
 
-        <div class="controls">
-            <button class="control-btn" id="prev-btn">⏮</button>
-            <button class="control-btn" id="play-pause-btn">▶</button>
-            <button class="control-btn" id="next-btn">⏭</button>
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div class="controls">
+                <button class="control-btn" id="prev-btn">⏮</button>
+                <button class="control-btn" id="play-pause-btn">▶</button>
+                <button class="control-btn" id="next-btn">⏭</button>
+            </div>
+            <div class="actions">
+                <button class="control-btn min-btn" id="min-btn" title="Minimize">⎯</button>
+            </div>
         </div>
     </div>
     <script src="renderer.js"></script>

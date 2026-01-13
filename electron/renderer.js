@@ -5,23 +5,35 @@ const placeholderEl = document.getElementById('album-art-placeholder');
 const playPauseBtn = document.getElementById('play-pause-btn');
 const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
+const minBtn = document.getElementById('min-btn');
 
-// Handle Playback Controls
-playPauseBtn.addEventListener('click', () => {
-    window.electronAPI.sendMediaCommand('play'); // 'play' toggles in content script usually, or we can be specific
-});
+// Playback Controls
+playPauseBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('play'));
+prevBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('prev'));
+nextBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('next'));
 
-prevBtn.addEventListener('click', () => {
-    window.electronAPI.sendMediaCommand('prev');
-});
+// Minimize
+minBtn.addEventListener('click', () => window.electronAPI.minimizeWindow());
 
-nextBtn.addEventListener('click', () => {
-    window.electronAPI.sendMediaCommand('next');
-});
+function setIdleState() {
+    titleEl.innerText = 'Not Playing';
+    artistEl.innerText = 'Waiting for music...';
+    playPauseBtn.innerText = '▶';
+    artEl.style.display = 'none';
+    placeholderEl.style.display = 'block';
+}
+
+function setLaunchingState() {
+    titleEl.innerText = 'Opening...';
+    artistEl.innerText = 'Launching YouTube Music';
+    playPauseBtn.innerText = '⏳';
+}
 
 // Update UI on Data
 window.electronAPI.onTrackUpdate((data) => {
-    // Update Text
+    // If empty data or bad state, maybe fallback? 
+    // But usually content script sends valid data.
+
     titleEl.innerText = data.title || 'Not Playing';
     artistEl.innerText = data.artist || 'Waiting for music...';
 
@@ -36,6 +48,16 @@ window.electronAPI.onTrackUpdate((data) => {
     } else {
         artEl.style.display = 'none';
         placeholderEl.style.display = 'block';
+    }
+});
+
+window.electronAPI.onLaunchingPlugin(() => {
+    setLaunchingState();
+});
+
+window.electronAPI.onConnectionStatus((isConnected) => {
+    if (!isConnected) {
+        setIdleState();
     }
 });
 
