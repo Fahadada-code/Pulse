@@ -1,0 +1,23 @@
+{
+  "name": "pulse-widget",
+  "version": "1.0.0",
+  "description": "Pulse - Lightweight YouTube Music Controller",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "youtube-music",
+    "electron",
+    "widget"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^39.2.7"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "ws": "^8.16.0"
+  }
+}

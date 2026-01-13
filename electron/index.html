@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Pulse</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: rgba(20, 20, 20, 0.95);
+            color: white;
+            margin: 0;
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            user-select: none;
+            -webkit-app-region: drag;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #album-art {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            background-color: #333;
+            margin-right: 15px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .info-container {
+            flex-grow: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #track-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #artist-name {
+            font-size: 13px;
+            color: #aaa;
+            margin: 0 0 10px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            -webkit-app-region: no-drag;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0;
+            font-size: 20px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            opacity: 1;
+        }
+
+        #play-pause-btn {
+            font-size: 28px;
+        }
+    </style>
+</head>
+
+<body>
+    <img id="album-art" src="" style="display: none;"> <!-- Placeholder hidden initially -->
+    <div id="album-art-placeholder"
+        style="width: 80px; height: 80px; background: #333; border-radius: 8px; margin-right: 15px;"></div>
+
+    <div class="info-container">
+        <h2 id="track-title">Not Playing</h2>
+        <p id="artist-name">Waiting for music...</p>
+
+        <div class="controls">
+            <button class="control-btn" id="prev-btn">⏮</button>
+            <button class="control-btn" id="play-pause-btn">▶</button>
+            <button class="control-btn" id="next-btn">⏭</button>
+        </div>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+
+</html>
