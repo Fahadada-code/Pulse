@@ -1,5 +1,6 @@
 let socket = null;
 let reconnectInterval = null;
+let keepAliveInterval = null;
 
 function connect() {
     console.log('Pulse: Connecting to WebSocket...');
@@ -11,6 +12,14 @@ function connect() {
             clearInterval(reconnectInterval);
             reconnectInterval = null;
         }
+
+        // Keep-Alive: Send PING every 25s
+        if (keepAliveInterval) clearInterval(keepAliveInterval);
+        keepAliveInterval = setInterval(() => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'PING' }));
+            }
+        }, 25000);
     };
 
     socket.onmessage = (event) => {
@@ -36,27 +45,32 @@ function connect() {
     };
 
     socket.onclose = () => {
-        console.log('Pulse: Disconnected, retrying in 3s...');
-        socket = null;
-        if (!reconnectInterval) {
-            reconnectInterval = setInterval(connect, 3000);
-        }
-    };
+        socket.onclose = () => {
+            console.log('Pulse: Disconnected, retrying in 3s...');
+            socket = null;
+            if (keepAliveInterval) {
+                clearInterval(keepAliveInterval);
+                keepAliveInterval = null;
+            }
+            if (!reconnectInterval) {
+                reconnectInterval = setInterval(connect, 3000);
+            }
+        };
 
-    socket.onerror = (error) => {
-        console.error('Pulse: WebSocket error', error);
-        socket.close(); // Trigger onclose to retry
-    };
-}
-
-// Start connection
-connect();
-
-// Listen for updates from Content Script and forward to Desktop
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.type === 'TRACK_UPDATE') {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: 'TRACK_UPDATE', data: request.data }));
-        }
+        socket.onerror = (error) => {
+            console.error('Pulse: WebSocket error', error);
+            socket.close(); // Trigger onclose to retry
+        };
     }
-});
+
+    // Start connection
+    connect();
+
+    // Listen for updates from Content Script and forward to Desktop
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.type === 'TRACK_UPDATE') {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'TRACK_UPDATE', data: request.data }));
+            }
+        }
+    });

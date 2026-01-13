@@ -25,6 +25,12 @@ function startServer() {
         ws.on('message', (message) => {
             try {
                 const parsed = JSON.parse(message);
+
+                if (parsed.type === 'PING') {
+                    // console.log('Ping received'); // Optional: debug
+                    return;
+                }
+
                 if (parsed.type === 'TRACK_UPDATE') {
                     // Forward to renderer
                     if (mainWindow) {

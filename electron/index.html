@@ -47,6 +47,8 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            width: 100%;
+            display: block;
         }
 
         #artist-name {
@@ -56,6 +58,8 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            width: 100%;
+            display: block;
         }
 
         .controls {
@@ -151,10 +155,12 @@
     <!-- Mini Mode UI -->
     <div id="mini-mode-container" style="display: none; position: relative; width: 60px; height: 60px;">
         <!-- Blurred background instead of logo -->
-        <div style="
+        <div id="mini-background" style="
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.1);
+            background-size: cover;
+            background-position: center;
             backdrop-filter: blur(20px);
             border-radius: 50%;
             border: 1px solid rgba(255, 255, 255, 0.2);

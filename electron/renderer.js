@@ -56,6 +56,8 @@ function setLaunchingState() {
     playPauseBtn.innerText = '⏳';
 }
 
+const miniBackground = document.getElementById('mini-background');
+
 // Update UI on Data
 window.electronAPI.onTrackUpdate((data) => {
     titleEl.innerText = data.title || 'Not Playing';
@@ -67,9 +69,15 @@ window.electronAPI.onTrackUpdate((data) => {
         artEl.src = data.albumArt;
         artEl.style.display = 'block';
         placeholderEl.style.display = 'none';
+
+        // Update Mini-Mode Background
+        miniBackground.style.backgroundImage = `url(${data.albumArt})`;
     } else {
         artEl.style.display = 'none';
         placeholderEl.style.display = 'block';
+
+        // Reset Mini-Mode Background
+        miniBackground.style.backgroundImage = 'none';
     }
 });
 
