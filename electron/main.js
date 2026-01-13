@@ -136,6 +136,13 @@ function createWindow() {
     ipcMain.on('minimize-window', () => {
         if (mainWindow) mainWindow.minimize();
     });
+
+    // Handle Desktop Audio Stream Request
+    ipcMain.handle('get-desktop-stream-id', async () => {
+        const sources = await require('electron').desktopCapturer.getSources({ types: ['screen'] });
+        // Return the first screen source (usually the primary display with system audio)
+        return sources[0]?.id;
+    });
 }
 
 app.whenReady().then(() => {
