@@ -65,6 +65,21 @@ function setLaunchingState() {
 
 const miniBackground = document.getElementById('mini-background');
 
+// Theme Color State
+let themeColor = '0, 255, 255'; // Default Cyan
+
+function getDominantColor(img) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1;
+    canvas.height = 1;
+
+    // Draw image to 1x1 canvas to get average color
+    ctx.drawImage(img, 0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return `${r}, ${g}, ${b}`;
+}
+
 // Visualizer Logic
 const canvas = document.getElementById('visualizer');
 const canvasCtx = canvas.getContext('2d');
@@ -148,29 +163,31 @@ function drawVisualizer() {
     const average = sum / dataArray.length;
 
     // Map average to glow intensity (0 to 30px)
-    const intensity = (average / 255) * 30;
-    const borderColor = `rgba(0, 255, 255, ${average / 255 * 0.8})`; // Cyan variable opacity
+    const intensity = (average / 255) * 40;
+    const borderColor = `rgba(${themeColor}, ${average / 255})`; // Dynamic Opacity
 
     // Apply to current mode container
     if (miniModeContainer.style.display !== 'none') {
         const miniBg = document.getElementById('mini-background');
         if (miniBg) {
-            miniBg.style.boxShadow = `0 0 ${intensity + 10}px ${borderColor}`;
-            miniBg.style.borderColor = `rgba(255, 255, 255, ${0.2 + (average / 255) * 0.5})`;
+            // INSET Shadow for Mini Mode
+            miniBg.style.boxShadow = `inset 0 0 ${intensity}px ${borderColor}`;
+            miniBg.style.borderColor = `rgba(255, 255, 255, ${0.4 + (average / 255) * 0.6})`;
         }
     } else {
-        document.body.style.boxShadow = `0 0 ${intensity + 5}px ${borderColor}`;
+        // INSET Shadow for Main Window
+        document.body.style.boxShadow = `inset 0 0 ${intensity}px ${borderColor}`;
+        document.body.style.borderColor = `rgba(255, 255, 255, ${0.3 + (average / 255) * 0.7})`;
     }
+
+    // Dynamic Gradient for Bars
+    const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, 0);
+    gradient.addColorStop(0, `rgba(${themeColor}, 0.8)`);
+    gradient.addColorStop(1, `rgba(${themeColor}, 0.2)`);
+    canvasCtx.fillStyle = gradient;
 
     for (let i = 0; i < dataArray.length; i++) {
         barHeight = dataArray[i] / 2; // Scale down
-
-        // Gradient color: Cyan to Purple
-        const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
-        gradient.addColorStop(0, 'rgba(0, 255, 255, 0.5)'); // Cyan
-        gradient.addColorStop(1, 'rgba(255, 0, 255, 0.2)'); // Purple
-
-        canvasCtx.fillStyle = gradient;
 
         // Draw rounded top bar
         canvasCtx.beginPath();
@@ -238,9 +255,21 @@ window.electronAPI.onTrackUpdate((data) => {
 
         // Update Mini-Mode Background
         miniBackground.style.backgroundImage = `url(${data.albumArt})`;
+
+        // Extract Theme Color
+        if (artEl.complete) {
+            themeColor = getDominantColor(artEl);
+        } else {
+            artEl.onload = () => {
+                themeColor = getDominantColor(artEl);
+            };
+        }
     } else {
         artEl.style.display = 'none';
         placeholderEl.style.display = 'block';
+
+        // Reset Theme
+        themeColor = '0, 255, 255'; // Default Cyan
 
         // Reset Mini-Mode Background
         miniBackground.style.backgroundImage = 'none';
