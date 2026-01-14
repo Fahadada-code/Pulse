@@ -155,48 +155,82 @@ function drawVisualizer() {
     let barHeight;
     let x = 0;
 
-    // Calculate Average Volume for Border Pulse
+    // Calculate Average Volume + Peak for punchier border
     let sum = 0;
+    let peak = 0;
     for (let i = 0; i < dataArray.length; i++) {
         sum += dataArray[i];
+        if (dataArray[i] > peak) peak = dataArray[i];
     }
     const average = sum / dataArray.length;
 
-    // Map average to glow intensity (0 to 30px)
-    const intensity = (average / 255) * 40;
-    const borderColor = `rgba(${themeColor}, ${average / 255})`; // Dynamic Opacity
+    // Non-linear response (power of 1.5) to make loud moments "pop" more
+    const reactivity = Math.pow(average / 255, 1.5);
+
+    // Dynamic Border Intensity
+    const blurRadius = 20 + (reactivity * 60); // Base 20px, pulse up to 80px
+    const spreadRadius = reactivity * 10; // Expand inwards
+    const opacity = 0.5 + (reactivity * 0.5); // Never fully transparent, pulses to 1.0
+
+    const colorString = `rgba(${themeColor}, ${opacity})`;
+    const brightColorString = `rgba(${themeColor}, ${Math.min(1, opacity + 0.3)})`;
 
     // Apply to current mode container
     if (miniModeContainer.style.display !== 'none') {
         const miniBg = document.getElementById('mini-background');
         if (miniBg) {
-            // INSET Shadow for Mini Mode
-            miniBg.style.boxShadow = `inset 0 0 ${intensity}px ${borderColor}`;
-            miniBg.style.borderColor = `rgba(255, 255, 255, ${0.4 + (average / 255) * 0.6})`;
+            // Dual-layer INSET shadow for depth
+            miniBg.style.boxShadow = `
+                inset 0 0 ${blurRadius}px ${spreadRadius}px ${colorString},
+                inset 0 0 ${blurRadius / 2}px ${colorString}
+            `;
+            miniBg.style.borderColor = `rgba(255, 255, 255, ${0.3 + reactivity})`;
         }
+        // Ensure Main Window body has no shadow/border in Mini Mode
+        document.body.style.boxShadow = 'none';
+        document.body.style.borderColor = 'transparent';
     } else {
-        // INSET Shadow for Main Window
-        document.body.style.boxShadow = `inset 0 0 ${intensity}px ${borderColor}`;
-        document.body.style.borderColor = `rgba(255, 255, 255, ${0.3 + (average / 255) * 0.7})`;
+        // Dual-layer INSET shadow for Main Window
+        document.body.style.boxShadow = `
+            inset 0 0 ${blurRadius}px ${spreadRadius}px ${colorString},
+            inset 0 0 10px ${brightColorString}
+        `;
+        document.body.style.borderColor = `rgba(255, 255, 255, ${0.4 + reactivity})`;
+
+        // Ensure Mini Mode has no style (though it's hidden, good practice)
+        const miniBg = document.getElementById('mini-background');
+        if (miniBg) {
+            miniBg.style.boxShadow = 'none';
+        }
     }
 
-    // Dynamic Gradient for Bars
+    // Dynamic Gradient for Bars - BRIGHTER
     const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, 0);
-    gradient.addColorStop(0, `rgba(${themeColor}, 0.8)`);
-    gradient.addColorStop(1, `rgba(${themeColor}, 0.2)`);
+    gradient.addColorStop(0, `rgba(${themeColor}, 1.0)`); // Solid base
+    gradient.addColorStop(0.5, `rgba(${themeColor}, 0.8)`);
+    gradient.addColorStop(1, `rgba(255, 255, 255, 0.9)`); // Fade to white at tips
+
     canvasCtx.fillStyle = gradient;
 
+    // Add Glow to Bars
+    canvasCtx.shadowBlur = 15;
+    canvasCtx.shadowColor = `rgba(${themeColor}, 0.8)`;
+
     for (let i = 0; i < dataArray.length; i++) {
-        barHeight = dataArray[i] / 2; // Scale down
+        // Exaggerate height for visibility
+        barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
 
         // Draw rounded top bar
         canvasCtx.beginPath();
         // Draw from bottom up
-        canvasCtx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, [5, 5, 0, 0]);
+        canvasCtx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, [10, 10, 0, 0]);
         canvasCtx.fill();
 
         x += barWidth + 2;
     }
+
+    // Reset shadow for next frame performance
+    canvasCtx.shadowBlur = 0;
 }
 
 function startVisualizer() {
