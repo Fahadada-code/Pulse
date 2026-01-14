@@ -8,7 +8,7 @@ class PulseConnector {
     }
 
     init() {
-        // Observer to watch for DOM changes (track change, play/pause)
+        // Watch playback changes
         this.observer = new MutationObserver(() => {
             this.checkForUpdates();
         });
@@ -28,22 +28,20 @@ class PulseConnector {
             return;
         }
 
-        // Also check periodically for time updates or other non-DOM changes
+        // Periodic check
         setInterval(() => this.checkForUpdates(), 1000);
 
-        // Keep Service Worker Alive
+        // SW keep-alive
         setInterval(() => {
-            // Use void to ignore the promise return and .catch to handle errors
-            void chrome.runtime.sendMessage({ type: 'KEEP_ALIVE' }).catch(() => {
-                // Ignore errors if extension context invalidated or receiver missing
-            });
+            // Keep alive
+            void chrome.runtime.sendMessage({ type: 'KEEP_ALIVE' }).catch(() => { });
         }, 10000);
     }
 
     checkForUpdates() {
         const state = this.getPlayerState();
 
-        // Simple deep equal check to avoid spamming updates (JSON stringify is cheap enough here)
+        // Avoid spam
         if (JSON.stringify(state) !== JSON.stringify(this.lastState)) {
             this.lastState = state;
             this.sendUpdate(state);
@@ -51,7 +49,7 @@ class PulseConnector {
     }
 
     getPlayerState() {
-        // Helper to try multiple selectors
+        // Try selectors
         const getText = (selectors) => {
             for (const sel of selectors) {
                 const el = document.querySelector(sel);
@@ -72,7 +70,7 @@ class PulseConnector {
 
         let artist = getText(['ytmusic-player-bar .byline', '.content-info-wrapper .subtitle', '.content-info-wrapper .byline']);
         if (artist) {
-            // Remove "• Album" or "• Views" parts often found in byline
+            // Clean artist
             artist = artist.split('•')[0].trim();
         } else {
             artist = 'Unknown Artist';
@@ -94,16 +92,16 @@ class PulseConnector {
     }
 
     sendUpdate(data) {
-        // Send to background script
+        // Send to bg
         try {
             chrome.runtime.sendMessage({ type: 'TRACK_UPDATE', data });
         } catch (e) {
-            // Extension might be reloaded
+            // Extension reloaded?
             console.log('Pulse: Failed to send update', e);
         }
     }
 
-    // Control methods to be called via messages
+    // Controls
     playPause() {
         const playButton = document.querySelector('#play-pause-button');
         if (playButton) playButton.click();
@@ -120,10 +118,10 @@ class PulseConnector {
     }
 }
 
-// Initialize
+// Init
 const pulse = new PulseConnector();
 
-// Listen for commands from background script (from Electron)
+// Listen for commands
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'COMMAND') {
         switch (request.command) {
@@ -133,7 +131,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 break;
             case 'next':
                 pulse.next();
-                break; // corrected 'nect' to 'next'
+                break;
             case 'prev':
                 pulse.previous();
                 break;

@@ -13,7 +13,7 @@ function connect() {
             reconnectInterval = null;
         }
 
-        // Keep-Alive: Send PING every 10s
+        // Keep-alive (10s)
         if (keepAliveInterval) clearInterval(keepAliveInterval);
         keepAliveInterval = setInterval(() => {
             if (socket && socket.readyState === WebSocket.OPEN) {
@@ -26,12 +26,12 @@ function connect() {
         try {
             const message = JSON.parse(event.data);
             if (message.type === 'COMMAND') {
-                // Forward command to content script
+                // Forward to content
                 chrome.tabs.query({ url: 'https://music.youtube.com/*' }, (tabs) => {
                     if (tabs.length > 0) {
                         tabs.forEach((tab) => {
                             chrome.tabs.sendMessage(tab.id, message).catch(err => {
-                                // Tab might be closed or content script not ready
+                                // Tab errors
                                 console.log('Pulse: Failed to send to tab', tab.id, err);
                             });
                         });
@@ -59,25 +59,24 @@ function connect() {
 
     socket.onerror = (error) => {
         console.error('Pulse: WebSocket error', error);
-        socket.close(); // Trigger onclose to retry
+        socket.close(); // Retry
     };
 }
 
-// Start connection
+// Connect
 connect();
 
-// Listen for updates from Content Script
+// Content updates
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'TRACK_UPDATE') {
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: 'TRACK_UPDATE', data: request.data }));
         } else if (!socket || socket.readyState !== WebSocket.OPEN) {
-            // Reconnect if disconnected
+            // Reconnect
             connect();
         }
     } else if (request.type === 'KEEP_ALIVE') {
-        // Just receiving this keeps the SW alive
-        // We can also ensure the socket is open
+        // SW keep-alive
         if (!socket || socket.readyState !== WebSocket.OPEN) {
             connect();
         }

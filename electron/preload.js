@@ -9,6 +9,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     resizeWindow: (width, height) => ipcRenderer.send('resize-window', { width, height }),
     moveWindow: (x, y) => ipcRenderer.send('move-window', { x, y }),
 
-    // Audio Capture
+    // Audio capture
     getDesktopStreamId: () => ipcRenderer.invoke('get-desktop-stream-id'),
 });

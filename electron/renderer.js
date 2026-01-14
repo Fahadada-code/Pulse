@@ -10,19 +10,19 @@ const extendedUI = document.getElementById('extended-ui');
 const miniModeContainer = document.getElementById('mini-mode-container');
 const expandBtn = document.getElementById('expand-btn');
 
-// Resume AudioContext on any interaction (Fallback)
+// Resume audio context
 document.addEventListener('click', () => {
     if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume();
     }
 });
 
-// Playback Controls
+// Audio controls
 playPauseBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('play'));
 prevBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('prev'));
 nextBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand('next'));
 
-// Mode Switching - Collapse
+// Collapse
 minBtn.addEventListener('click', () => {
     extendedUI.style.display = 'none';
     miniModeContainer.style.display = 'block';
@@ -33,7 +33,7 @@ minBtn.addEventListener('click', () => {
     document.body.style.border = 'none';
 });
 
-// Expand button click
+// Expand
 expandBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     expandUI();
@@ -65,7 +65,7 @@ function setLaunchingState() {
 
 const miniBackground = document.getElementById('mini-background');
 
-// Theme Color State
+// Theme color
 let themeColor = '0, 255, 255'; // Default Cyan
 
 function getDominantColor(img) {
@@ -74,13 +74,13 @@ function getDominantColor(img) {
     canvas.width = 1;
     canvas.height = 1;
 
-    // Draw image to 1x1 canvas to get average color
+    // Get average color
     ctx.drawImage(img, 0, 0, 1, 1);
     const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
     return `${r}, ${g}, ${b}`;
 }
 
-// Visualizer Logic
+// Visualizer
 const canvas = document.getElementById('visualizer');
 const canvasCtx = canvas.getContext('2d');
 let audioContext;
@@ -90,7 +90,7 @@ let source;
 let animationId;
 let isVisualizerRunning = false;
 
-// Setup Audio Visualizer
+// Setup visualizer
 async function setupVisualizer() {
     try {
         const streamId = await window.electronAPI.getDesktopStreamId();
@@ -109,12 +109,12 @@ async function setupVisualizer() {
             }
         });
 
-        // We only need audio
+        // Audio only
         const audioStream = new MediaStream(stream.getAudioTracks());
 
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 64; // Small size for bars
+        analyser.fftSize = 64; // Small fft size
 
         source = audioContext.createMediaStreamSource(audioStream);
         source.connect(analyser);
@@ -122,7 +122,7 @@ async function setupVisualizer() {
         const bufferLength = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLength);
 
-        // Resize canvas
+        // Resize
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
@@ -133,9 +133,7 @@ async function setupVisualizer() {
 
 function resizeCanvas() {
     if (canvas) {
-        // Use offsetWidth/Height for pixel-perfect standard scaling, 
-        // but for high-DPI (Retina) we might want window.devicePixelRatio, 
-        // however simple size is fast and sufficient for this "blurry" style.
+        // Match canvas size
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
     }
@@ -150,12 +148,12 @@ function drawVisualizer() {
 
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Style: Soft, rounded bars
+    // Soft bars
     const barWidth = (canvas.width / dataArray.length) * 2.5;
     let barHeight;
     let x = 0;
 
-    // Calculate Average Volume + Peak for punchier border
+    // Calculate volume
     let sum = 0;
     let peak = 0;
     for (let i = 0; i < dataArray.length; i++) {
@@ -164,72 +162,71 @@ function drawVisualizer() {
     }
     const average = sum / dataArray.length;
 
-    // Non-linear response (power of 1.5) to make loud moments "pop" more
+    // Non-linear response
     const reactivity = Math.pow(average / 255, 1.5);
 
-    // Dynamic Border Intensity
-    const blurRadius = 20 + (reactivity * 60); // Base 20px, pulse up to 80px
-    const spreadRadius = reactivity * 10; // Expand inwards
-    const opacity = 0.5 + (reactivity * 0.5); // Never fully transparent, pulses to 1.0
+    // Border intensity
+    const blurRadius = 20 + (reactivity * 60); // Pulse range
+    const spreadRadius = reactivity * 10; // Inward spread
+    const opacity = 0.5 + (reactivity * 0.5); // Opacity range
 
     const colorString = `rgba(${themeColor}, ${opacity})`;
     const brightColorString = `rgba(${themeColor}, ${Math.min(1, opacity + 0.3)})`;
 
-    // Apply to current mode container
+    // Update container
     if (miniModeContainer.style.display !== 'none') {
         const miniBg = document.getElementById('mini-background');
         if (miniBg) {
-            // Dual-layer INSET shadow for depth
+            // Inset shadow
             miniBg.style.boxShadow = `
                 inset 0 0 ${blurRadius}px ${spreadRadius}px ${colorString},
                 inset 0 0 ${blurRadius / 2}px ${colorString}
             `;
             miniBg.style.borderColor = `rgba(255, 255, 255, ${0.3 + reactivity})`;
         }
-        // Ensure Main Window body has no shadow/border in Mini Mode
+        // Clear main window
         document.body.style.boxShadow = 'none';
         document.body.style.borderColor = 'transparent';
     } else {
-        // Dual-layer INSET shadow for Main Window
+        // Main window shadow
         document.body.style.boxShadow = `
             inset 0 0 ${blurRadius}px ${spreadRadius}px ${colorString},
             inset 0 0 10px ${brightColorString}
         `;
         document.body.style.borderColor = `rgba(255, 255, 255, ${0.4 + reactivity})`;
 
-        // Ensure Mini Mode has no style (though it's hidden, good practice)
+        // Clear mini mode
         const miniBg = document.getElementById('mini-background');
         if (miniBg) {
             miniBg.style.boxShadow = 'none';
         }
     }
 
-    // Dynamic Gradient for Bars - BRIGHTER
+    // Bar gradient
     const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, 0);
-    gradient.addColorStop(0, `rgba(${themeColor}, 1.0)`); // Solid base
+    gradient.addColorStop(0, `rgba(${themeColor}, 1.0)`); // Base
     gradient.addColorStop(0.5, `rgba(${themeColor}, 0.8)`);
-    gradient.addColorStop(1, `rgba(255, 255, 255, 0.9)`); // Fade to white at tips
+    gradient.addColorStop(1, `rgba(255, 255, 255, 0.9)`); // White tips
 
     canvasCtx.fillStyle = gradient;
 
-    // Add Glow to Bars
+    // Bar glow
     canvasCtx.shadowBlur = 15;
     canvasCtx.shadowColor = `rgba(${themeColor}, 0.8)`;
 
     for (let i = 0; i < dataArray.length; i++) {
-        // Exaggerate height for visibility
+        // Boost height
         barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
 
-        // Draw rounded top bar
+        // Draw bar
         canvasCtx.beginPath();
-        // Draw from bottom up
         canvasCtx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, [10, 10, 0, 0]);
         canvasCtx.fill();
 
         x += barWidth + 2;
     }
 
-    // Reset shadow for next frame performance
+    // Reset shadow
     canvasCtx.shadowBlur = 0;
 }
 
@@ -256,10 +253,10 @@ function stopVisualizer() {
         cancelAnimationFrame(animationId);
         animationId = null;
     }
-    // Clear canvas
+    // Clear
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Reset Borders
+    // Reset borders
     document.body.style.boxShadow = 'none';
     const miniBg = document.getElementById('mini-background');
     if (miniBg) {
@@ -268,12 +265,12 @@ function stopVisualizer() {
     }
 }
 
-// Update UI on Data
+// Update UI
 window.electronAPI.onTrackUpdate((data) => {
     titleEl.innerText = data.title || 'Not Playing';
     artistEl.innerText = data.artist || 'Waiting for music...';
 
-    // Toggle Visualizer based on play state
+    // Toggle visualizer
     if (data.isPlaying) {
         playPauseBtn.innerText = '⏸';
         startVisualizer();
@@ -287,10 +284,10 @@ window.electronAPI.onTrackUpdate((data) => {
         artEl.style.display = 'block';
         placeholderEl.style.display = 'none';
 
-        // Update Mini-Mode Background
+        // Mini-mode bg
         miniBackground.style.backgroundImage = `url(${data.albumArt})`;
 
-        // Extract Theme Color
+        // Get color
         if (artEl.complete) {
             themeColor = getDominantColor(artEl);
         } else {
@@ -302,10 +299,10 @@ window.electronAPI.onTrackUpdate((data) => {
         artEl.style.display = 'none';
         placeholderEl.style.display = 'block';
 
-        // Reset Theme
+        // Reset theme
         themeColor = '0, 255, 255'; // Default Cyan
 
-        // Reset Mini-Mode Background
+        // Reset bg
         miniBackground.style.backgroundImage = 'none';
     }
 });

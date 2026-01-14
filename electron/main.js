@@ -8,26 +8,26 @@ const PORT = process.env.WS_PORT || 8999;
 let wss;
 let mainWindow;
 
-// Prevent multiple instances
+// Single instance
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
     app.quit();
 } else {
     app.on('second-instance', () => {
-        // Someone tried to run a second instance, we should focus our window.
+        // Focus window
         if (mainWindow) {
             if (mainWindow.isMinimized()) mainWindow.restore();
             mainWindow.focus();
         }
     });
 
-    // Global Error Handling to prevent crashes
+    // Error handling
     process.on('uncaughtException', (error) => {
         console.error('CRITICAL ERROR:', error);
-        // Keep running if possible
+        // Keep alive
     });
 
-    // Auto-start disabled per user request
+    // Disable auto-start
     app.setLoginItemSettings({
         openAtLogin: false,
         path: app.getPath('exe'),
@@ -39,12 +39,12 @@ function startServer() {
 
     wss.on('error', (err) => {
         console.error('WebSocket Server Error:', err);
-        // Don't crash the app, but maybe retry or log
+        // Log error
     });
 
     wss.on('connection', (ws) => {
         console.log('Client connected');
-        // Notify renderer of connection
+        // Notify renderer
         if (mainWindow) mainWindow.webContents.send('connection-status', true);
 
         ws.on('message', (message) => {
@@ -52,7 +52,7 @@ function startServer() {
                 const parsed = JSON.parse(message);
 
                 if (parsed.type === 'PING') {
-                    // console.log('Ping received'); // Optional: debug
+                    // Debug ping
                     return;
                 }
 
@@ -100,18 +100,18 @@ function createWindow() {
             contextIsolation: true,
             autoplayPolicy: 'no-user-gesture-required'
         },
-        icon: path.join(__dirname, '../assets/icon.png') // Set app icon
+        icon: path.join(__dirname, '../assets/icon.png') // App icon
     });
 
-    // CRITICAL: Set level to 'screen-saver' to stay above exclusive-mode games
+    // Screen-saver level
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
     mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-    // Handle commands from renderer
+    // Handle commands
     ipcMain.on('media-command', (event, command) => {
-        // Broadcast to all connected clients (extensions)
+        // Broadcast commands
         if (wss) {
             wss.clients.forEach((client) => {
                 if (client.readyState === WebSocket.OPEN) {
@@ -121,7 +121,7 @@ function createWindow() {
         }
     });
 
-    // Handle Mini-Mode
+    // Mini-mode
     ipcMain.on('resize-window', (event, { width, height }) => {
         if (mainWindow) {
             mainWindow.setSize(width, height);
@@ -138,11 +138,11 @@ function createWindow() {
         if (mainWindow) mainWindow.minimize();
     });
 
-    // Handle Desktop Audio Stream Request
+    // Audio stream
     ipcMain.handle('get-desktop-stream-id', async () => {
         const sources = await require('electron').desktopCapturer.getSources({ types: ['screen'] });
         console.log('Desktop Sources Found:', sources.length, sources[0]?.id);
-        // Return the first screen source (usually the primary display with system audio)
+        // Get primary source
         return sources[0]?.id;
     });
 }
