@@ -7,30 +7,26 @@ const PORT = process.env.WS_PORT || 8999;
 let wss;
 let mainWindow;
 
-// --- SINGLE INSTANCE LOCK ---
-// We only want one widget running at a time.
+// Only allow one instance to run at a time
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
     app.quit();
 } else {
     app.on('second-instance', () => {
-        // If someone tries to run a second instance, focus the existing one instead.
+        // Focus the existing window if user tries to open Pulse again
         if (mainWindow) {
             if (mainWindow.isMinimized()) mainWindow.restore();
             mainWindow.focus();
         }
     });
 
-    // --- ERROR HANDLING ---
-    // Prevent the app from crashing silently on unhandled errors.
     process.on('uncaughtException', (error) => {
-        console.error('CRITICAL ERROR:', error);
+        console.error('Unhandled Exception:', error);
     });
 }
 
-// --- WEBSOCKET SERVER ---
-// This acts as the bridge between the Chrome Extension and our Desktop App.
+// Bridge service for Chrome Extension communication
 function startServer() {
     wss = new WebSocket.Server({ port: PORT });
 
@@ -41,7 +37,7 @@ function startServer() {
     wss.on('connection', (ws) => {
         // console.log('Client connected'); 
 
-        // Let the renderer know we're connected to the music source
+        // Notify UI that we have a connection
         if (mainWindow) mainWindow.webContents.send('connection-status', true);
 
         ws.on('message', (message) => {
@@ -63,8 +59,7 @@ function startServer() {
         });
 
         ws.on('close', () => {
-            // console.log('Client disconnected');
-            // If all clients differ, tell the UI we lost connection
+            // Signal disconnection if no clients are left
             if (mainWindow && wss.clients.size === 0) {
                 mainWindow.webContents.send('connection-status', false);
             }
@@ -74,7 +69,6 @@ function startServer() {
     console.log(`Bridge Server running on port ${PORT}`);
 }
 
-// --- MAIN WINDOW CREATION ---
 function createWindow() {
     const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
     const widgetWidth = 400;
@@ -85,14 +79,14 @@ function createWindow() {
         height: widgetHeight,
         x: screenWidth - widgetWidth - 20, // Bottom right corner
         y: screenHeight - widgetHeight - 20,
-        frame: false, // No title bar
+        frame: false,
         transparent: true,
         alwaysOnTop: true,
         resizable: false,
-        skipTaskbar: true, // Hide from taskbar and Alt-Tab
-        type: 'toolbar',  // Helps hide from Alt-Tab on Windows
-        focusable: true,  // Keep it interactive
-        show: false,      // Don't show immediately to prevent focus theft
+        skipTaskbar: true,
+        type: 'toolbar',
+        focusable: true,
+        show: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
@@ -102,7 +96,7 @@ function createWindow() {
         icon: path.join(__dirname, '../assets/icon.png')
     });
 
-    // High level always-on-top to stay above other windows
+    // Keep window on top and visible across workspaces
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
@@ -111,9 +105,7 @@ function createWindow() {
 
     mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-    // --- IPC EVENTS ---
-
-    // Broadcast commands (play, pause, next) to the Chrome Extension
+    // Relay media commands to the browser extension
     ipcMain.on('media-command', (event, command) => {
         if (wss) {
             wss.clients.forEach((client) => {
@@ -123,8 +115,6 @@ function createWindow() {
             });
         }
     });
-
-    // Window Management
     ipcMain.on('resize-window', (event, { width, height }) => {
         if (mainWindow) mainWindow.setSize(width, height);
     });
@@ -141,15 +131,14 @@ function createWindow() {
         app.quit();
     });
 
-    // Audio Capture for Visualizer
-    // We need the ID of the screen/desktop to capture system audio.
+    // Handle desktop stream capture for the visualizer
     ipcMain.handle('get-desktop-stream-id', async () => {
         const sources = await desktopCapturer.getSources({ types: ['screen'] });
         return sources[0]?.id;
     });
 }
 
-// --- APP LIFECYCLE ---
+// App lifecycle
 
 app.whenReady().then(() => {
     startServer();

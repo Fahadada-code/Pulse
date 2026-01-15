@@ -9,24 +9,25 @@ const minBtn = document.getElementById('min-btn');
 const extendedUI = document.getElementById('extended-ui');
 const miniModeContainer = document.getElementById('mini-mode-container');
 const expandBtn = document.getElementById('expand-btn');
+const miniBackground = document.getElementById('mini-background');
+const canvas = document.getElementById('visualizer');
+const canvasCtx = canvas.getContext('2d');
+const miniCanvas = document.getElementById('mini-visualizer');
+const miniCanvasCtx = miniCanvas.getContext('2d');
 
-// --- RESUME AUDIO CONTEXT ---
-// Browsers block audio unless triggered by a user action.
-// We capture any click to ensure the visualizer can start.
+// Resume AudioContext on first click (browser security requirement)
 document.addEventListener('click', () => {
     if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume();
     }
 });
 
-// --- UI INTERACTIONS ---
-
 let isNavigating = false;
 function handleNav(action) {
     if (isNavigating) return;
     isNavigating = true;
     window.electronAPI.sendMediaCommand(action);
-    // Prevent spamming buttons
+    // Prevent spamming
     setTimeout(() => isNavigating = false, 500);
 }
 
@@ -34,24 +35,23 @@ playPauseBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand
 prevBtn.addEventListener('click', () => handleNav('prev'));
 nextBtn.addEventListener('click', () => handleNav('next'));
 
-// Switch to Mini Mode (Floating Bubble)
+// Mini Mode (Floating Bubble)
 minBtn.addEventListener('click', () => {
     extendedUI.style.display = 'none';
     miniModeContainer.style.display = 'block';
 
     window.electronAPI.resizeWindow(60, 60);
-    // Make transparent for the circular look
     document.body.style.padding = '0';
     document.body.style.background = 'transparent';
     document.body.style.border = 'none';
 
-    // Give the layout a moment to settle before resizing canvas
+    // Let layout settle before resizing canvas
     setTimeout(resizeCanvas, 50);
 });
 
-// Switch to Extended Mode (Main UI)
+// Extended Mode (Main UI)
 expandBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Don't trigger drag
+    e.stopPropagation();
     expandUI();
 });
 
@@ -81,10 +81,8 @@ function setLaunchingState() {
     playPauseBtn.innerText = '⏳';
 }
 
-const miniBackground = document.getElementById('mini-background');
-
-// Theme color
-let themeColor = '0, 255, 255'; // Default Cyan
+// Track dominant color for theme
+let themeColor = '0, 255, 255';
 
 function getDominantColor(img) {
     const canvas = document.createElement('canvas');
@@ -98,12 +96,6 @@ function getDominantColor(img) {
     return `${r}, ${g}, ${b}`;
 }
 
-// Visualizer
-const canvas = document.getElementById('visualizer');
-const canvasCtx = canvas.getContext('2d');
-const miniCanvas = document.getElementById('mini-visualizer');
-const miniCanvasCtx = miniCanvas.getContext('2d');
-
 let audioContext;
 let analyser;
 let dataArray;
@@ -111,7 +103,7 @@ let source;
 let animationId;
 let isVisualizerRunning = false;
 
-// Setup visualizer
+// Set up audio capture visualizer
 async function setupVisualizer() {
     try {
         const streamId = await window.electronAPI.getDesktopStreamId();
@@ -130,12 +122,11 @@ async function setupVisualizer() {
             }
         });
 
-        // Audio only
         const audioStream = new MediaStream(stream.getAudioTracks());
 
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 64; // Small fft size
+        analyser.fftSize = 64;
 
         source = audioContext.createMediaStreamSource(audioStream);
         source.connect(analyser);
@@ -143,7 +134,7 @@ async function setupVisualizer() {
         const bufferLength = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLength);
 
-        // Resize
+        // Initialize canvas sizing
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
@@ -175,7 +166,6 @@ function drawVisualizer() {
 
     const isMiniMode = miniModeContainer.style.display !== 'none';
 
-    // Calculate volume
     let sum = 0;
     let peak = 0;
     for (let i = 0; i < dataArray.length; i++) {
@@ -184,29 +174,24 @@ function drawVisualizer() {
     }
     const average = sum / dataArray.length;
 
-    // Non-linear response
+    // Reactivity response
     const reactivity = Math.pow(average / 255, 1.5);
-    const reactivityPeak = Math.pow(peak / 255, 2); // Sharper peak for flash
+    const reactivityPeak = Math.pow(peak / 255, 2);
 
-    // Common Colors
     const opacity = 0.5 + (reactivity * 0.5);
     const colorString = `rgba(${themeColor}, ${opacity})`;
 
     if (isMiniMode) {
-        // --- MINI MODE: FLASH / PULSE ONLY (No Waves) ---
+        // Mini Mode: Pulsing glow only
         const miniBg = document.getElementById('mini-background');
         if (miniBg) {
-            // Intense Flash Effect: Inset shadow fills the circle based on volume
-            // Base glow + Beat Flash
-            const flashIntensity = reactivityPeak * 60; // Up to 60px spread
+            const flashIntensity = reactivityPeak * 60;
 
             miniBg.style.boxShadow = `
                 inset 0 0 ${20 + flashIntensity}px ${flashIntensity / 2}px ${colorString},
                 0 0 ${10 + (reactivity * 20)}px rgba(${themeColor}, 0.6)
             `;
-            // Border lights up
             miniBg.style.borderColor = `rgba(255, 255, 255, ${0.4 + reactivityPeak})`;
-            // Background tint flash
             miniBg.style.backgroundColor = `rgba(${themeColor}, ${reactivity * 0.3})`;
         }
 
@@ -215,9 +200,7 @@ function drawVisualizer() {
         document.body.style.borderColor = 'transparent';
 
     } else {
-        // --- MAX MODE: WAVES + NORMAL BORDER ---
-
-        // Border intensity
+        // Full Mode: Waves and border glow
         const blurRadius = 20 + (reactivity * 60);
         const spreadRadius = reactivity * 10;
         const brightColorString = `rgba(${themeColor}, ${Math.min(1, opacity + 0.3)})`;
@@ -228,17 +211,14 @@ function drawVisualizer() {
         `;
         document.body.style.borderColor = `rgba(255, 255, 255, ${0.4 + reactivity})`;
 
-        // Clear Mini Mode
         const miniBg = document.getElementById('mini-background');
         if (miniBg) miniBg.style.boxShadow = 'none';
 
-        // Draw Waves (Max Mode Only)
-        // Soft bars
+        // Render audio waves
         const barWidth = (canvas.width / dataArray.length) * 2.5;
         let barHeight;
         let x = 0;
 
-        // Bar gradient
         const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, 0);
         gradient.addColorStop(0, `rgba(${themeColor}, 1.0)`);
         gradient.addColorStop(0.5, `rgba(${themeColor}, 0.8)`);
@@ -282,7 +262,6 @@ function stopVisualizer() {
         cancelAnimationFrame(animationId);
         animationId = null;
     }
-    // Clear
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Reset borders
@@ -294,9 +273,6 @@ function stopVisualizer() {
     }
 }
 
-// Update UI
-
-
 const volumeSlider = document.getElementById('volume-slider');
 const muteBtn = document.getElementById('mute-btn');
 const seekBackBtn = document.getElementById('seek-back-btn');
@@ -305,10 +281,10 @@ const closeBtnExt = document.getElementById('close-btn-ext');
 
 let isDraggingVolume = false;
 
-// Exit Events
+// App exit
 closeBtnExt.addEventListener('click', () => window.electronAPI.quitApp());
 
-// Volume Events
+// Volume control
 volumeSlider.addEventListener('input', (e) => {
     isDraggingVolume = true;
     const val = e.target.value;
@@ -336,16 +312,16 @@ function updateMuteIcon(vol, isMuted) {
     }
 }
 
-// Seek Events
+// Seeking
 seekBackBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand({ action: 'seek', value: -10 }));
 seekFwdBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand({ action: 'seek', value: 10 }));
 
-// Update UI
+// Sync UI with track updates
 window.electronAPI.onTrackUpdate((data) => {
     titleEl.innerText = data.title || 'Not Playing';
     artistEl.innerText = data.artist || 'Waiting for music...';
 
-    // Toggle visualizer
+    // Track visualizer state
     if (data.isPlaying) {
         playPauseBtn.innerText = '⏸';
         startVisualizer();
@@ -354,10 +330,8 @@ window.electronAPI.onTrackUpdate((data) => {
         stopVisualizer();
     }
 
-    // Volume Sync (only if not dragging)
-    // Check if extension is updated (sends volume data)
+    // Sync volume if not dragging
     if (data.volume === undefined && data.isPlaying) {
-        // Extension is outdated
         titleEl.innerText = "⚠️ Extension Outdated";
         artistEl.innerText = "Please reload Pulse in chrome://extensions";
         volumeSlider.style.opacity = '0.2';
@@ -375,10 +349,7 @@ window.electronAPI.onTrackUpdate((data) => {
         artEl.style.display = 'block';
         placeholderEl.style.display = 'none';
 
-        // Mini-mode bg
-        miniBackground.style.backgroundImage = `url(${data.albumArt})`;
-
-        // Get color
+        // Update theme based on art
         if (artEl.complete) {
             themeColor = getDominantColor(artEl);
         } else {
@@ -386,19 +357,15 @@ window.electronAPI.onTrackUpdate((data) => {
                 themeColor = getDominantColor(artEl);
             };
         }
+        miniBackground.style.backgroundImage = `url(${data.albumArt})`;
     } else {
         artEl.style.display = 'none';
         placeholderEl.style.display = 'block';
-
-        // Reset theme
-        themeColor = '0, 255, 255'; // Default Cyan
-
-        // Reset bg
+        themeColor = '0, 255, 255';
         miniBackground.style.backgroundImage = 'none';
     }
 
-    // Dynamic Close Button Coloring
-    // We use the theme color but ensure it's bright/visible
+    // Color close button to match art
     const btnColor = `rgba(${themeColor}, 0.6)`;
     const btnHoverColor = `rgba(${themeColor}, 0.9)`;
 
@@ -414,7 +381,6 @@ window.electronAPI.onLaunchingPlugin(() => {
 });
 
 window.electronAPI.onConnectionStatus((isConnected) => {
-    console.log('Connection Status:', isConnected);
     if (!isConnected) {
         titleEl.innerText = 'Disconnected';
         artistEl.innerText = 'Please Reload Extension';
@@ -422,7 +388,6 @@ window.electronAPI.onConnectionStatus((isConnected) => {
         artEl.style.display = 'none';
         placeholderEl.style.display = 'block';
     } else {
-        // If we were disconnected, revert to idle until music starts
         if (titleEl.innerText === 'Disconnected') {
             setIdleState();
         }
