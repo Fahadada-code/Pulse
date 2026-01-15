@@ -396,6 +396,54 @@ window.electronAPI.onTrackUpdate((data) => {
     titleEl.innerText = data.title || 'Not Playing';
     artistEl.innerText = data.artist || 'Waiting for music...';
 
+    artEl.style.display = 'none';
+    placeholderEl.style.display = 'block';
+}
+
+const volumeSlider = document.getElementById('volume-slider');
+const muteBtn = document.getElementById('mute-btn');
+const seekBackBtn = document.getElementById('seek-back-btn');
+const seekFwdBtn = document.getElementById('seek-fwd-btn');
+
+let isDraggingVolume = false;
+
+// Volume Events
+volumeSlider.addEventListener('input', (e) => {
+    isDraggingVolume = true;
+    const val = e.target.value;
+    window.electronAPI.sendMediaCommand({ action: 'setVolume', value: val });
+    updateMuteIcon(val, false);
+});
+
+volumeSlider.addEventListener('change', () => {
+    isDraggingVolume = false;
+});
+
+muteBtn.addEventListener('click', () => {
+    window.electronAPI.sendMediaCommand({ action: 'toggleMute' });
+});
+
+function updateMuteIcon(vol, isMuted) {
+    if (isMuted || vol == 0) {
+        muteBtn.innerText = '🔇';
+        volumeSlider.style.opacity = '0.5';
+    } else {
+        muteBtn.innerText = '🔊';
+        volumeSlider.style.opacity = '1';
+        if (vol < 50) muteBtn.innerText = '🔉';
+
+    }
+}
+
+// Seek Events
+seekBackBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand({ action: 'seek', value: -10 }));
+seekFwdBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand({ action: 'seek', value: 10 }));
+
+// Update UI
+window.electronAPI.onTrackUpdate((data) => {
+    titleEl.innerText = data.title || 'Not Playing';
+    artistEl.innerText = data.artist || 'Waiting for music...';
+
     // Toggle visualizer
     if (data.isPlaying) {
         playPauseBtn.innerText = '⏸';
@@ -403,6 +451,14 @@ window.electronAPI.onTrackUpdate((data) => {
     } else {
         playPauseBtn.innerText = '▶';
         stopVisualizer();
+    }
+
+    // Volume Sync (only if not dragging)
+    if (!isDraggingVolume) {
+        if (data.volume !== undefined) {
+            volumeSlider.value = data.volume;
+            updateMuteIcon(data.volume, data.isMuted);
+        }
     }
 
     if (data.albumArt) {

@@ -80,14 +80,18 @@ class PulseConnector {
 
         const videoElement = document.querySelector('video');
         const isPlaying = videoElement ? !videoElement.paused : false;
+        const volume = videoElement ? Math.round(videoElement.volume * 100) : 100;
+        const isMuted = videoElement ? videoElement.muted : false;
 
-        console.log('Pulse Debug:', { title, artist, albumArt, isPlaying });
+        // console.log('Pulse Debug:', { title, artist, albumArt, isPlaying, volume, isMuted });
 
         return {
             title,
             artist,
             albumArt,
-            isPlaying
+            isPlaying,
+            volume,
+            isMuted
         };
     }
 
@@ -116,6 +120,28 @@ class PulseConnector {
         const prevButton = document.querySelector('.previous-button');
         if (prevButton) prevButton.click();
     }
+
+    setVolume(val) {
+        const video = document.querySelector('video');
+        if (video) {
+            video.volume = val / 100;
+            if (val > 0 && video.muted) video.muted = false;
+        }
+    }
+
+    toggleMute() {
+        const video = document.querySelector('video');
+        if (video) {
+            video.muted = !video.muted;
+        }
+    }
+
+    seek(seconds) {
+        const video = document.querySelector('video');
+        if (video) {
+            video.currentTime += seconds;
+        }
+    }
 }
 
 // Init
@@ -124,7 +150,11 @@ const pulse = new PulseConnector();
 // Listen for commands
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'COMMAND') {
-        switch (request.command) {
+        const cmd = request.command;
+        // Support string 'play' or object { action: 'setVolume', value: 50 }
+        const action = typeof cmd === 'string' ? cmd : cmd.action;
+
+        switch (action) {
             case 'play':
             case 'pause':
                 pulse.playPause();
@@ -134,6 +164,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 break;
             case 'prev':
                 pulse.previous();
+                break;
+            case 'toggleMute':
+                pulse.toggleMute();
+                break;
+            case 'setVolume':
+                pulse.setVolume(cmd.value);
+                break;
+            case 'seek':
+                pulse.seek(cmd.value);
                 break;
         }
     }

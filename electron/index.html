@@ -154,11 +154,47 @@
 
             <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                 <div class="controls">
+                    <!-- Seek Back -->
+                    <button class="control-btn" id="seek-back-btn" title="-10s" style="font-size: 16px;">↺</button>
+
                     <button class="control-btn" id="prev-btn">⏮</button>
                     <button class="control-btn" id="play-pause-btn">▶</button>
                     <button class="control-btn" id="next-btn">⏭</button>
+
+                    <!-- Seek Fwd -->
+                    <button class="control-btn" id="seek-fwd-btn" title="+10s" style="font-size: 16px;">↻</button>
                 </div>
+
+                <!-- Volume & Collapse -->
                 <div class="actions">
+                    <div id="volume-container" style="display: flex; align-items: center; gap: 5px; margin-right: 8px;">
+                        <button class="control-btn" id="mute-btn" style="font-size: 16px;">🔊</button>
+                        <input type="range" id="volume-slider" min="0" max="100" value="100" style="
+                            width: 60px; 
+                            height: 4px; 
+                            -webkit-appearance: none; 
+                            background: rgba(255,255,255,0.3); 
+                            border-radius: 2px; 
+                            outline: none;
+                            cursor: pointer;
+                        ">
+                        <style>
+                            #volume-slider::-webkit-slider-thumb {
+                                -webkit-appearance: none;
+                                width: 10px;
+                                height: 10px;
+                                background: white;
+                                border-radius: 50%;
+                                cursor: pointer;
+                                transition: transform 0.1s;
+                            }
+
+                            #volume-slider::-webkit-slider-thumb:hover {
+                                transform: scale(1.2);
+                            }
+                        </style>
+                    </div>
+
                     <button class="control-btn min-btn" id="min-btn" title="Collapse">⎯</button>
                 </div>
             </div>

@@ -35,7 +35,7 @@ function connect() {
                                 console.log('Pulse: Failed to send to tab', tab.id, err);
                             });
                         });
-                    } else if (['play', 'next', 'prev'].includes(message.command)) {
+                    } else if (typeof message.command === 'string' && ['play', 'next', 'prev'].includes(message.command)) {
                         chrome.tabs.create({ url: 'https://music.youtube.com' });
                     }
                 });
