@@ -9,12 +9,12 @@ Pulse bridges the gap between web-based music playback and a native desktop expe
 ## ✨ Features
 
 - Always-on-top desktop widget  
-- Live track info (title, artist, album art, play state)  
+- Live track info (title, artist, album art, playback state)  
 - Play / pause / next / previous controls  
 - Volume control  
-- Auto-opens YouTube Music when controls are used  
+- Automatically opens YouTube Music when controls are used  
 - Visual music feedback (sound waves + animated borders while music plays)  
-- Works while gaming or multitasking  
+- Remains visible while gaming or multitasking  
 - Clean, minimal UI with minimize and close controls  
 
 ---
@@ -23,11 +23,11 @@ Pulse bridges the gap between web-based music playback and a native desktop expe
 
 Pulse uses a **hybrid architecture**:
 
-- **Electron** renders the desktop widget  
-- A **Chrome Extension** reads playback state from YouTube Music  
-- **WebSocket communication** syncs data and controls in real time  
+- **Electron** renders the native desktop widget  
+- A **Chrome Extension** reads playback state directly from YouTube Music  
+- **WebSocket communication** syncs playback data and controls in real time  
 
-This design allows Pulse to feel native while still controlling a web-based music service.
+This approach allows Pulse to feel like a native system widget while still interacting with a browser-based music service.
 
 ---
 
@@ -43,7 +43,7 @@ This design allows Pulse to feel native while still controlling a web-based musi
 - **YouTube Music DOM hooks**
 
 ### Communication
-- **WebSockets** (real-time playback sync)
+- **WebSockets** (real-time sync)
 
 ### Tooling
 - **Node.js**
@@ -52,21 +52,9 @@ This design allows Pulse to feel native while still controlling a web-based musi
 
 ---
 
-## 🚀 Running Pulse (No Installer Needed)
-
-Pulse runs as a **standalone app** using the `win-unpacked` build.
-
-### Steps:
-1. Download or clone the repository  
-2. Open the `dist/win-unpacked` folder  
-3. Double-click `Pulse.exe`  
-4. (Optional) Create a desktop shortcut for easy access  
-
-Pulse does **not** require YouTube Music to be open — it will automatically open it when you use playback controls.
-
----
-
 ## 🧩 Development Setup
+
+Pulse is developed and built locally using Electron.
 
 ```bash
 # Install dependencies
@@ -75,8 +63,7 @@ npm install
 # Run in development mode
 npm run dev
 
-# Build standalone app
+# Build the standalone desktop application
 npm run dist
 
 # After building, the app will be in the dist/win-unpacked folder
-
