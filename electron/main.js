@@ -89,7 +89,10 @@ function createWindow() {
         transparent: true,
         alwaysOnTop: true,
         resizable: false,
-        skipTaskbar: false, // Ensure we can find it in the taskbar/Alt-Tab
+        skipTaskbar: true, // Hide from taskbar and Alt-Tab
+        type: 'toolbar',  // Helps hide from Alt-Tab on Windows
+        focusable: true,  // Keep it interactive
+        show: false,      // Don't show immediately to prevent focus theft
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
@@ -99,9 +102,12 @@ function createWindow() {
         icon: path.join(__dirname, '../assets/icon.png')
     });
 
-    // Keep it on top, even over other apps (like screensavers if possible)
+    // High level always-on-top to stay above other windows
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
+    // Show without stealing focus from the user's active app
+    mainWindow.showInactive();
 
     mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
@@ -129,6 +135,10 @@ function createWindow() {
 
     ipcMain.on('minimize-window', () => {
         if (mainWindow) mainWindow.minimize();
+    });
+
+    ipcMain.on('quit-app', () => {
+        app.quit();
     });
 
     // Audio Capture for Visualizer

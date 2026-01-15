@@ -301,8 +301,12 @@ const volumeSlider = document.getElementById('volume-slider');
 const muteBtn = document.getElementById('mute-btn');
 const seekBackBtn = document.getElementById('seek-back-btn');
 const seekFwdBtn = document.getElementById('seek-fwd-btn');
+const closeBtnExt = document.getElementById('close-btn-ext');
 
 let isDraggingVolume = false;
+
+// Exit Events
+closeBtnExt.addEventListener('click', () => window.electronAPI.quitApp());
 
 // Volume Events
 volumeSlider.addEventListener('input', (e) => {
@@ -391,6 +395,17 @@ window.electronAPI.onTrackUpdate((data) => {
 
         // Reset bg
         miniBackground.style.backgroundImage = 'none';
+    }
+
+    // Dynamic Close Button Coloring
+    // We use the theme color but ensure it's bright/visible
+    const btnColor = `rgba(${themeColor}, 0.6)`;
+    const btnHoverColor = `rgba(${themeColor}, 0.9)`;
+
+    if (closeBtnExt) {
+        closeBtnExt.style.backgroundColor = btnColor;
+        closeBtnExt.onmouseover = () => closeBtnExt.style.backgroundColor = btnHoverColor;
+        closeBtnExt.onmouseout = () => closeBtnExt.style.backgroundColor = btnColor;
     }
 });
 

@@ -44,22 +44,28 @@
             font-size: 16px;
             font-weight: 600;
             margin: 0 0 4px 0;
-            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            /* Up to 2 lines */
+            -webkit-box-orient: vertical;
+            word-break: break-word;
             width: 100%;
-            display: block;
         }
 
         #artist-name {
             font-size: 13px;
             color: #aaa;
             margin: 0 0 10px 0;
-            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            word-break: break-word;
             width: 100%;
-            display: block;
         }
 
         .controls {
@@ -131,6 +137,36 @@
 <body>
     <!-- Extended Mode UI -->
     <div id="extended-ui" style="display: flex; align-items: center; width: 100%; position: relative;">
+        <button id="close-btn-ext" style="
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-app-region: no-drag;
+            z-index: 1000;
+            opacity: 0.6;
+            transition: all 0.2s;
+        " title="Quit App">✕</button>
+        <style>
+            #extended-ui:hover #close-btn-ext {
+                opacity: 1;
+            }
+
+            #close-btn-ext:hover {
+                transform: scale(1.1);
+            }
+        </style>
+
         <!-- Visualizer Canvas -->
         <canvas id="visualizer" style="
             position: absolute;
@@ -173,6 +209,7 @@
                             width: 60px; 
                             height: 4px; 
                             -webkit-appearance: none; 
+                            appearance: none; 
                             background: rgba(255,255,255,0.3); 
                             border-radius: 2px; 
                             outline: none;
@@ -256,7 +293,9 @@
             transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         " title="Expand">⊕</button>
+
     </div>
+
 
     <script src="renderer.js"></script>
 </body>

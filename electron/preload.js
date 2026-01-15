@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     minimizeWindow: () => ipcRenderer.send('minimize-window'),
     resizeWindow: (width, height) => ipcRenderer.send('resize-window', { width, height }),
     moveWindow: (x, y) => ipcRenderer.send('move-window', { x, y }),
+    quitApp: () => ipcRenderer.send('quit-app'),
 
     // Audio capture
     getDesktopStreamId: () => ipcRenderer.invoke('get-desktop-stream-id'),
