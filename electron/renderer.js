@@ -317,8 +317,15 @@ seekBackBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand(
 seekFwdBtn.addEventListener('click', () => window.electronAPI.sendMediaCommand({ action: 'seek', value: 10 }));
 
 // Sync UI with track updates
+let currentTrackTitle = '';
+
 window.electronAPI.onTrackUpdate((data) => {
-    titleEl.innerText = data.title || 'Not Playing';
+    const isNewTrack = data.title && data.title !== currentTrackTitle && data.title !== 'Not Playing' && data.title !== 'Disconnected';
+
+    // Always update the internal state
+    currentTrackTitle = data.title || 'Not Playing';
+
+    titleEl.innerText = currentTrackTitle;
     artistEl.innerText = data.artist || 'Waiting for music...';
 
     // Track visualizer state
@@ -339,8 +346,14 @@ window.electronAPI.onTrackUpdate((data) => {
     } else if (!isDraggingVolume) {
         volumeSlider.disabled = false;
         if (data.volume !== undefined) {
-            volumeSlider.value = data.volume;
-            updateMuteIcon(data.volume, data.isMuted);
+            if (isNewTrack) {
+                // If song changed, force our current widget volume level onto the new song
+                window.electronAPI.sendMediaCommand({ action: 'setVolume', value: volumeSlider.value });
+            } else {
+                // During the same song, stay synced with the browser's volume
+                volumeSlider.value = data.volume;
+                updateMuteIcon(data.volume, data.isMuted);
+            }
         }
     }
 

@@ -31,7 +31,11 @@ function startServer() {
     wss = new WebSocket.Server({ port: PORT });
 
     wss.on('error', (err) => {
-        console.error('WebSocket Server Error:', err);
+        if (err.code === 'EADDRINUSE') {
+            console.log('Port already in use. Likely another instance is running.');
+        } else {
+            console.error('WebSocket Server Error:', err);
+        }
     });
 
     wss.on('connection', (ws) => {
