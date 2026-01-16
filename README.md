@@ -4,32 +4,44 @@
 ![Pulse Preview 2](assets/preview2.png)
 ![Pulse Preview 3](assets/preview3.png)
 
-Pulse is a desktop widget that allows you to control YouTube Music from your desktop. It stays on top of other windows so you can easily manage your music while working or gaming.
+Pulse is a lightweight desktop widget designed for real-time control and visualization of YouTube Music playback. It functions as a persistent, frameless overlay that remains accessible over other windows, providing a seamless bridge between the browser-based player and the desktop environment.
+
+## Architecture
+
+Pulse utilizes a three-tier architecture to achieve low-latency communication and system-level desktop integration:
+
+1. **Desktop Widget (Electron)**: A specialized frameless window configured with secondary-instance locking and high-level window positioning. It renders the user interface and processes real-time audio data for the visualizer.
+2. **Browser Layer (Chrome Extension)**: A localized extension that interacts directly with the YouTube Music Document Object Model (DOM) to monitor playback state and inject media commands.
+3. **Communication Bridge (WebSockets)**: A local WebSocket server facilitates bidirectional data flow between the extension and the desktop app, ensuring instantaneous state synchronization.
 
 ## Features
 
-Pulse provides a persistent overlay that remains visible over other applications. It includes a dynamic visualizer and borders that react to the music currently playing. You can switch to a mini mode for a more compact interface. The widget allows for direct control over playback, including volume adjustments and seeking. It also automatically pauses the music when the application is closed.
+- **Desktop Presence**: A frameless, always-on-top window designed to stay visible during multitasking or gaming.
+- **Dynamic Visualizer**: Real-time audio analysis using the Web Audio API to render reactive visual elements and borders based on frequency data.
+- **Media Control Sync**: Full bidirectional control for play/pause, volume adjustment, and seeking, with forced volume consistency across track transitions.
+- **Dynamic UI States**: Adaptive interface featuring both a full control panel and a compact mini-mode, with theme colors extracted from current album art.
+- **Automatic Cleanup**: Integrated shutdown procedures that broadcast pause commands to the browser when the widget is terminated.
 
 ## Installation
 
-To set up the desktop application for development, run the following commands in your terminal:
+### Desktop Application
+To initialize the development environment or build a standalone executable:
 
 npm install
-
 npm start
-
-To build a standalone executable for the application, use:
-
 npm run dist
 
-The output will be located in the dist folder.
+Built executables are available in the dist directory upon successful completion of the build script.
 
-To set up the browser extension, open Chrome and navigate to the extensions page. Enable developer mode and use the option to load an unpacked extension, selecting the folder named extension in this project.
+### Browser Extension
+1. Open Chrome and navigate to chrome://extensions.
+2. Enable Developer Mode.
+3. Click Load unpacked and select the extension directory from this repository.
 
 ## Usage
 
-Once both the application and extension are set up, open YouTube Music in your browser. The Pulse widget will connect automatically and display track information. You can use the on-screen buttons to play, pause, skip, or adjust the volume.
+Launch the Pulse application and ensure the Chrome extension is active with a YouTube Music tab open. The widget will automatically establish a connection to the browser tab. Direct interaction with the widget—such as clicking on it once—may be required to initialize the Web Audio context for the visualizer.
 
 ## Troubleshooting
 
-If the widget displays a disconnected message, verify that the YouTube Music tab is open and the extension is active. If the visualizer is not moving, click once anywhere on the widget to enable the audio context as required by browser security. Any other minor bugs can usually be fixed by simply closing and reopening the application.
+If the connection status is inactive, verify that valid audio is playing and that the browser tab has not been discarded by the system. Most synchronization issues can be resolved by restarting the desktop application.
