@@ -16,7 +16,7 @@ Pulse uses a simple architecture to bridge your browser and desktop:
 
 ## Features
 
-* **Desktop Presence**: A window designed to stay always on top so it never gets lost behind other apps.
+* **Desktop Presence**: A window widget designed to stay always on top so it never gets lost behind other apps.
 * **Dynamic Visualizer**: Real time audio analysis that creates reactive visual elements and borders based on the music.
 * **Media Control Sync**: Full control for play, pause, volume, and seeking, with volume consistency across track changes.
 * **Dynamic UI States**: An interface that features both a full panel and a compact mini mode, with colors that change based on album art.
